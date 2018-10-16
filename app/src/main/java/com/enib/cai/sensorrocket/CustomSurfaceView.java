@@ -11,6 +11,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     private Thread mThread;
     private Gyro mGyro;
+    private Lumen mLumen;
     private SurfaceHolder mSurfaceHolder;
     private boolean mRunning;
     private int mbgColor;
@@ -20,12 +21,14 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mSurfaceHolder = getHolder();
         mSurfaceHolder.addCallback(this);
         mGyro = new Gyro(context);
+        mLumen = new Lumen(context);
         mbgColor = Color.argb(255,135, 206, 235);
     }
 
     public void onPause()
     {
         mGyro.onPause();
+        mLumen.onPause();
         mRunning = false;
         try {
             mThread.join();
@@ -37,6 +40,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     public void onResume() {
         mGyro.onResume();
+        mLumen.onResume();
         mRunning = true;
         mThread = new Thread(this);
         mThread.start();
@@ -59,7 +63,9 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 canvas.drawText("Gyro X : "+String.format("%.1f",mGyro.x), 50, 100, textPaint);
                 canvas.drawText("Gyro Y : "+String.format("%.1f",mGyro.y), 50, 200, textPaint);
                 canvas.drawText("Gyro Z : "+String.format("%.1f",mGyro.z), 50, 300, textPaint);
-
+                canvas.drawText("Light : "+String.valueOf(mLumen.currentLux), 50, 400, textPaint);
+                canvas.drawText("MinLight : "+String.valueOf(mLumen.minLux), 50, 500, textPaint);
+                canvas.drawText("MaxLight : "+String.valueOf(mLumen.maxLux), 50, 600, textPaint);
                 mSurfaceHolder.unlockCanvasAndPost(canvas);
             }
         }
