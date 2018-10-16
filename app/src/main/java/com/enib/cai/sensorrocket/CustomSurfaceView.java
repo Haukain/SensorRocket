@@ -7,8 +7,12 @@ import android.graphics.Paint;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.Vector;
+
 public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Callback,Runnable{
 
+    private Rocket mRocket;
+    private Vector<Ennemy> mEnnemy;
     private Thread mThread;
     private Gyro mGyro;
     private SurfaceHolder mSurfaceHolder;
@@ -17,6 +21,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     public CustomSurfaceView (Context context){
         super(context);
+        mRocket = new Rocket();
         mSurfaceHolder = getHolder();
         mSurfaceHolder.addCallback(this);
         mGyro = new Gyro(context);
@@ -51,7 +56,9 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
                 Paint bgPaint = new Paint();
                 bgPaint.setColor(mbgColor);
-                canvas.drawRect(0, 0, this.getWidth(), this.getHeight(), bgPaint);
+                canvas.drawPaint(bgPaint);
+
+                canvas.drawPath(mRocket.drawRocket(this.getWidth(),this.getHeight(),mGyro.y*20),mRocket.getPaint());
 
                 Paint textPaint = new Paint();
                 textPaint.setColor(Color.BLACK);
@@ -64,6 +71,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
             }
         }
     }
+
+
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
