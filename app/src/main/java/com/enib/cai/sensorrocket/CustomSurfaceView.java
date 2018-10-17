@@ -26,6 +26,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mSurfaceHolder.addCallback(this);
         mGyro = new Gyro(context);
         mbgColor = Color.argb(255,135, 206, 235);
+        mEnnemy = new Vector<Ennemy>();
+        mEnnemy.add(new Ennemy(this.getWidth()));
     }
 
     public void onPause()
