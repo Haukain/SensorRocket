@@ -3,15 +3,18 @@ package com.enib.cai.sensorrocket;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Point;
 
 public class Rocket {
 
     private float mRocketOffset;
     private Paint mPaint;
+    private Point mPosition;
 
     public Rocket()
     {
         mRocketOffset = 0;
+        mPosition = new Point(0,0);
 
         mPaint = new Paint();
         mPaint.setStrokeWidth(4);
@@ -20,32 +23,35 @@ public class Rocket {
         mPaint.setAntiAlias(true);
     }
 
-    public Path drawRocket(float screenWidth, float screenHeight, float offset) {
+    public Path drawRocket() {
         Path path = new Path();
-        mRocketOffset += offset;
-        if(mRocketOffset<(-screenWidth/2))
-        {
-            mRocketOffset = -screenWidth/2;
-        }
-        if(mRocketOffset>screenWidth/2)
-        {
-            mRocketOffset = screenWidth/2;
-        }
+
         path.setFillType(Path.FillType.EVEN_ODD);
-        path.moveTo(screenWidth/2 + mRocketOffset, screenHeight-150);
-        path.lineTo(screenWidth/2-27 + mRocketOffset, screenHeight-150);
-        path.lineTo(screenWidth/2-26 + mRocketOffset, screenHeight-200);
-        path.lineTo(screenWidth/2-25 + mRocketOffset, screenHeight-250);
-        path.lineTo(screenWidth/2-10 + mRocketOffset, screenHeight-295);
-        path.lineTo(screenWidth/2 + mRocketOffset, screenHeight-300);
-        path.lineTo(screenWidth/2+10 + mRocketOffset, screenHeight-295);
-        path.lineTo(screenWidth/2+25 + mRocketOffset, screenHeight-250);
-        path.lineTo(screenWidth/2+26 + mRocketOffset, screenHeight-200);
-        path.lineTo(screenWidth/2+27 + mRocketOffset, screenHeight-150);
-        path.lineTo(screenWidth/2 + mRocketOffset, screenHeight-150);
+        path.moveTo(mPosition.x, mPosition.y);
+        path.lineTo(mPosition.x - 27, mPosition.y);
+        path.lineTo(mPosition.x - 26, mPosition.y - 50);
+        path.lineTo(mPosition.x - 25, mPosition.y - 100);
+        path.lineTo(mPosition.x -10, mPosition.y - 145);
+        path.lineTo(mPosition.x, mPosition.y - 150);
+        path.lineTo(mPosition.x + 10, mPosition.y - 145);
+        path.lineTo(mPosition.x + 25, mPosition.y - 100);
+        path.lineTo(mPosition.x + 26, mPosition.y - 50);
+        path.lineTo(mPosition.x + 27, mPosition.y);
+        path.lineTo(mPosition.x, mPosition.y);
         path.close();
 
         return path;
+    }
+
+    public Point getPosition()
+    {
+        return mPosition;
+    }
+
+    public void setPosition(Point newPos)
+    {
+
+        mPosition = newPos;
     }
 
     public Paint getPaint()

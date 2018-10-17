@@ -1,5 +1,7 @@
 package com.enib.cai.sensorrocket;
 
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
 
 public class Ennemy {
@@ -7,12 +9,16 @@ public class Ennemy {
     private int mSpeed;
     private int mSize;
     private Point mPosition;
+    private Paint mPaint;
 
-    public Ennemy(int maxWidth)
+    public Ennemy(int maxWidth,int offset)
     {
-        mSpeed = 50;
-        mSize = 30;
-        mPosition = new Point(maxWidth/2,-20);
+        mSpeed = 5;
+        mSize = 40;
+        mPosition = new Point(offset*(maxWidth/100),-20);
+
+        mPaint = new Paint();
+        mPaint.setColor(Color.argb(255,50, 255, 50));
     }
 
     public int getSpeed()
@@ -33,5 +39,10 @@ public class Ennemy {
     public void setPosition(Point newPos)
     {
         mPosition = newPos;
+    }
+
+    public Paint getPaint()
+    {
+        return mPaint;
     }
 }
