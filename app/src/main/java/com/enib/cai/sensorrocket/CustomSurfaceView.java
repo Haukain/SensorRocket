@@ -6,16 +6,13 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.RectF;
 import android.graphics.Region;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Toast;
 
 import java.util.Iterator;
-import java.util.Random;
 import java.util.Vector;
 
 public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Callback,Runnable{
@@ -31,6 +28,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private long mlastEnnemySpawn;
 
     private Rocket mRocket;
+    private Vector<Point> mRocketSmoke;
     private Vector<Ennemy> mEnnemy;
     private int mbgColor;
     private boolean mRocketPosUnset;
@@ -52,8 +50,10 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mlastEnnemySpawn=0;
 
         mRocket = new Rocket();
-        mEnnemy = new Vector<Ennemy>();
-        mbgColor = Color.argb(255,135, 206, 235);
+        mRocketSmoke = new Vector<>();
+        mEnnemy = new Vector<>();
+        //mbgColor = Color.argb(255,135, 206, 235);
+        mbgColor = Color.argb(255,18, 62, 135);
         mRocketPosUnset = true;
 
         mTouchHitBox = new Region();
@@ -124,6 +124,19 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     bgPaint.setColor(mbgColor);
                     canvas.drawPaint(bgPaint);
 
+                    //Drawing animation
+                    Paint smokePaint = new Paint();
+                    smokePaint.setColor(Color.argb((int)(Math.random()*50 +50),255,255,255));
+                    if(mRocketSmoke.size()<20) mRocketSmoke.add(new Point(mRocket.getPosition().x,mRocket.getPosition().y+30));
+                    Iterator<Point> pi = mRocketSmoke.iterator();
+                    while(pi.hasNext())
+                    {
+                        Point p = pi.next();
+                        canvas.drawCircle(p.x,p.y,(int)(Math.random()*25+20),smokePaint);
+                        if(p.y>this.getHeight()+50) pi.remove();
+                        else p.set(p.x + (int)(Math.random()*10-5),p.y+20);
+                    }
+
                     //Getting Rocket Path
                     Path rocketPath = mRocket.drawRocket();
                     //Getting Rocket Hitbox
@@ -133,7 +146,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     canvas.drawPath(rocketPath, mRocket.getPaint());
 
                     //Updating the rocket position
-                    float acceleroOffset = Math.abs(mAccelero.x)>0.1?(-mAccelero.x*2):0;
+                    float acceleroOffset = Math.abs(mAccelero.x)>0.2?(-mAccelero.x*3):0;
                     float newX = mRocket.getPosition().x + acceleroOffset;
                     if (newX > this.getWidth()) newX = this.getWidth();
                     else if (newX < 0) newX = 0;
@@ -167,6 +180,10 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                             //Hit Ennemy if touched
                             e.setHit(true);
                         }
+                        if(mLumen.currentLux>1000)
+                        {
+                            e.setHit(true);
+                        }
 
                         //Drawing the Ennemy
                         canvas.drawPath(ennemyPath,e.getPaint());
@@ -184,19 +201,21 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         mRocket.setHit(false);
                     }
 
-                    //Drawing gyroscope text
+                    //Drawing text
                     Paint textPaint = new Paint();
-                    textPaint.setColor(Color.BLACK);
-                    textPaint.setTextSize(50);
+                    textPaint.setColor(Color.WHITE);
+                    textPaint.setTextSize(80);
+                    canvas.drawText("SCORE : " + String.valueOf(mCurrentTimeInSecond),this.getWidth()/2,100,textPaint);
+                    /*
                     canvas.drawText("Acceleration X : " + String.format("%.1f", mAccelero.x), 50, 100, textPaint);
                     canvas.drawText("Acceleration Y : " + String.format("%.1f", mAccelero.y), 50, 200, textPaint);
                     canvas.drawText("Acceleration Z : " + String.format("%.1f", mAccelero.z), 50, 300, textPaint);
                     canvas.drawText("Light : "+String.valueOf(mLumen.currentLux), 50, 400, textPaint);
                     canvas.drawText("MinLight : "+String.valueOf(mLumen.minLux), 50, 500, textPaint);
                     canvas.drawText("MaxLight : "+String.valueOf(mLumen.maxLux), 50, 600, textPaint);
-
                     canvas.drawText("Time : " + String.valueOf(mCurrentTimeInSecond),500,100,textPaint);
                     canvas.drawText("nb Ennemies"+String.valueOf(mEnnemy.size()),500,200,textPaint);
+                    */
 
                     mSurfaceHolder.unlockCanvasAndPost(canvas);
                 }

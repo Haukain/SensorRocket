@@ -5,6 +5,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.RectF;
+import android.util.Log;
 
 public class Rocket {
 
@@ -21,7 +22,7 @@ public class Rocket {
 
         mPaint = new Paint();
         mPaint.setStrokeWidth(4);
-        mPaint.setColor(Color.argb(255,255, 0, 0));
+        mPaint.setColor(Color.argb(255,200, 0, 24));
         mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         mPaint.setAntiAlias(true);
     }
@@ -84,7 +85,7 @@ public class Rocket {
 
     public void setPaint() // Setting paint to default paint (255,255,0,0)
     {
-        mPaint.setColor(Color.argb(255,255, 0, 0));
+        mPaint.setColor(Color.argb(255,200, 0, 24));
     }
 
     public boolean getHit() // Getting hit boolean
@@ -95,7 +96,7 @@ public class Rocket {
     public void setHit(boolean state) // Setting hit boolean and changing paint to "hit" paint
     {
         mHit = state;
-        if(state==true) setPaint(255,127,127,255);
+        if(state==true) setPaint(255,127,127,127);
         else setPaint();
     }
 

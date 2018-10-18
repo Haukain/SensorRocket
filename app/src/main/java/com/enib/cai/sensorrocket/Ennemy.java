@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.util.Log;
 
 public class Ennemy {
 
@@ -25,7 +26,7 @@ public class Ennemy {
 
         mPaint = new Paint();
         mPaint.setStrokeWidth(4);
-        mPaint.setColor(Color.argb(255,76+(int)(Math.random()*20-10), 64+(int)(Math.random()*20-10), 51+(int)(Math.random()*20-10)));
+        mPaint.setColor(Color.argb(255,245+(int)(Math.random()*20-10), 215+(int)(Math.random()*20-10), 0+(int)(Math.random()*20-10)));
         mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         mPaint.setAntiAlias(true);
     }
