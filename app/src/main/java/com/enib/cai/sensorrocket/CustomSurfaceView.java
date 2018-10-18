@@ -62,14 +62,6 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     public void run() {
         Canvas canvas;
         while (mRunning) {
-            if (mSurfaceHolder.getSurface().isValid()) {
-                canvas = mSurfaceHolder.lockCanvas();
-
-                Paint bgPaint = new Paint();
-                bgPaint.setColor(mbgColor);
-                canvas.drawRect(0, 0, this.getWidth(), this.getHeight(), bgPaint);
-
-                mSurfaceHolder.unlockCanvasAndPost(canvas);
 
             // Setting the rocket position for the first time
             if(mRocketPosUnset)
