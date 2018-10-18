@@ -4,10 +4,13 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.Region;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 import java.util.Iterator;
 import java.util.Random;
@@ -88,30 +91,61 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     bgPaint.setColor(mbgColor);
                     canvas.drawPaint(bgPaint);
 
-                    //Drawing rocket
-                    canvas.drawPath(mRocket.drawRocket(), mRocket.getPaint());
+                    //Getting Rocket Path
+                    Path rocketPath = mRocket.drawRocket();
+                    //Getting Rocket Hitbox
+                    Region rocketHitBox = new Region();
+                    rocketHitBox.setPath(rocketPath,new Region(0,0,this.getWidth(),this.getHeight()));
+                    //Drawing Rocket
+                    canvas.drawPath(rocketPath, mRocket.getPaint());
 
                     //Updating the rocket position
-                    float gyroOffset = Math.abs(mGyro.y)>0.1?mGyro.y*20:0;
+                    float gyroOffset = Math.abs(mGyro.y)>0.02?mGyro.y*20:0;
                     float newX = mRocket.getPosition().x + gyroOffset;
                     if (newX > this.getWidth()) newX = this.getWidth();
                     else if (newX < 0) newX = 0;
                     mRocket.setPosition(new Point((int) newX, mRocket.getPosition().y));
-                    Log.d("new pos", String.valueOf(mRocket.getPosition().x) + "  " + String.valueOf(mRocket.getPosition().y));
+
+                    boolean hitThisLoop = false;
 
                     //Iterating the ennemy vector
                     Iterator<Ennemy> it = mEnnemy.iterator();
                     while (it.hasNext()) {
                         Ennemy e = it.next();
-                        //Drawing the ennemy
-                        canvas.drawRect(e.getPosition().x, e.getPosition().y, e.getPosition().x + e.getSize(),
-                                e.getPosition().y + e.getSize(), e.getPaint());
+
+                        //Getting Ennemy Path
+                        Path ennemyPath = e.drawEnnemy();
+                        //Getting Ennemy Hitbox
+                        Region ennemyHitBox = new Region();
+                        ennemyHitBox.setPath(ennemyPath,new Region(0,0,this.getWidth(),this.getHeight()));
+
+                        if(!hitThisLoop) {
+                            //Checking for collision only if not hit this loop
+                            if (!rocketHitBox.quickReject(ennemyHitBox) && rocketHitBox.op(ennemyHitBox, Region.Op.INTERSECT)) {
+                                Log.v("Collision", "collision");
+                                //If not alread hit and currently hit, set "hit" to 1
+                                if (!mRocket.getHit()) {
+                                    Log.v("Hit", "hit");
+                                    hitThisLoop=true;
+                                    mRocket.setHit(true);
+                                }
+                            }
+                        }
+
+                        //Drawing the Ennemy
+                        canvas.drawPath(ennemyPath,e.getPaint());
+
                         //Updating the ennemy position
                         e.setPosition(new Point(e.getPosition().x, e.getPosition().y + e.getSpeed()));
                         if (e.getPosition().y > (this.getHeight() + 10)) {
                             //removing ennemy if it is out of bounds
                             it.remove();
                         }
+                    }
+
+                    if(!hitThisLoop && mRocket.getHit()) // If not hit by any ennemy and already hit, set "hit" to 0
+                    {
+                        mRocket.setHit(false);
                     }
 
                     //Drawing gyroscope text

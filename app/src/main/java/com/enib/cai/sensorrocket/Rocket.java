@@ -10,11 +10,13 @@ public class Rocket {
     private float mRocketOffset;
     private Paint mPaint;
     private Point mPosition;
+    private boolean mHit;
 
     public Rocket()
     {
         mRocketOffset = 0;
         mPosition = new Point(0,0);
+        mHit = false;
 
         mPaint = new Paint();
         mPaint.setStrokeWidth(4);
@@ -58,4 +60,27 @@ public class Rocket {
     {
         return mPaint;
     }
+
+    public void setPaint(int alpha,int red,int green,int blue) // Setting paint to argb(a,r,g,b)
+    {
+        mPaint.setColor(Color.argb(alpha,red,green,blue));
+    }
+
+    public void setPaint() // Setting paint to default paint (255,255,0,0)
+    {
+        mPaint.setColor(Color.argb(255,255, 0, 0));
+    }
+
+    public boolean getHit() // Getting hit boolean
+    {
+        return mHit;
+    }
+
+    public void setHit(boolean state) // Setting hit boolean and changing paint to "hit" paint
+    {
+        mHit = state;
+        if(state==true) setPaint(255,127,127,255);
+        else setPaint();
+    }
+
 }
