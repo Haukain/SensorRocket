@@ -12,11 +12,11 @@ public class Ennemy {
     private Point mPosition;
     private Paint mPaint;
 
-    public Ennemy(int maxWidth,int offset)
+    public Ennemy(int maxWidth)
     {
-        mSpeed = 5;
-        mSize = 40;
-        mPosition = new Point(offset*(maxWidth/100),-20);
+        mSpeed = (int)(Math.random()*8 + 5);
+        mSize = (int)(Math.random()*50 + 30);
+        mPosition = new Point((int)(Math.random()*maxWidth),-80);
 
         mPaint = new Paint();
         mPaint.setStrokeWidth(4);

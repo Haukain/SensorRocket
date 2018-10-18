@@ -18,10 +18,13 @@ import java.util.Vector;
 
 public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Callback,Runnable{
 
+    private long mBeginningTime;
+    private long mCurrentTime;
     private Rocket mRocket;
     private Vector<Ennemy> mEnnemy;
     private Thread mThread;
-    private Gyro mGyro;
+    private Accelero mAccelero;
+    //private Gyro mGyro;
     private Lumen mLumen;
     private SurfaceHolder mSurfaceHolder;
     private boolean mRunning;
@@ -30,10 +33,15 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     public CustomSurfaceView (Context context){
         super(context);
+
+        mBeginningTime = System.currentTimeMillis();
+        mCurrentTime = mBeginningTime;
+
         mRocket = new Rocket();
         mSurfaceHolder = getHolder();
         mSurfaceHolder.addCallback(this);
-        mGyro = new Gyro(context);
+        mAccelero = new Accelero(context);
+        //mGyro = new Gyro(context);
         mLumen = new Lumen(context);
         mbgColor = Color.argb(255,135, 206, 235);
         mEnnemy = new Vector<Ennemy>();
@@ -42,7 +50,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     public void onPause()
     {
-        mGyro.onPause();
+        mAccelero.onPause();
+        //mGyro.onPause();
         mLumen.onPause();
         mRunning = false;
         try {
@@ -54,7 +63,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     }
 
     public void onResume() {
-        mGyro.onResume();
+        mAccelero.onResume();
+        //mGyro.onResume();
         mLumen.onResume();
         mRunning = true;
         mThread = new Thread(this);
@@ -78,8 +88,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
             else {
 
                 // Random test to see if we should add an ennemy to the ennemy vector
-                if (Math.random() < 0.01) {
-                    mEnnemy.add(new Ennemy(this.getWidth(), (int) (100 * Math.random())));
+                if (Math.random() < 0.05 && mEnnemy.size()<30) {
+                    mEnnemy.add(new Ennemy(this.getWidth()));
                 }
 
                 // Drawing loop
@@ -100,8 +110,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     canvas.drawPath(rocketPath, mRocket.getPaint());
 
                     //Updating the rocket position
-                    float gyroOffset = Math.abs(mGyro.y)>0.02?mGyro.y*20:0;
-                    float newX = mRocket.getPosition().x + gyroOffset;
+                    float acceleroOffset = Math.abs(mAccelero.x)>0.1?(-mAccelero.x*2):0;
+                    float newX = mRocket.getPosition().x + acceleroOffset;
                     if (newX > this.getWidth()) newX = this.getWidth();
                     else if (newX < 0) newX = 0;
                     mRocket.setPosition(new Point((int) newX, mRocket.getPosition().y));
@@ -122,10 +132,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         if(!hitThisLoop) {
                             //Checking for collision only if not hit this loop
                             if (!rocketHitBox.quickReject(ennemyHitBox) && rocketHitBox.op(ennemyHitBox, Region.Op.INTERSECT)) {
-                                Log.v("Collision", "collision");
                                 //If not alread hit and currently hit, set "hit" to 1
                                 if (!mRocket.getHit()) {
-                                    Log.v("Hit", "hit");
                                     hitThisLoop=true;
                                     mRocket.setHit(true);
                                 }
@@ -152,12 +160,16 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     Paint textPaint = new Paint();
                     textPaint.setColor(Color.BLACK);
                     textPaint.setTextSize(50);
-                    canvas.drawText("Gyro X : " + String.format("%.1f", mGyro.x), 50, 100, textPaint);
-                    canvas.drawText("Gyro Y : " + String.format("%.1f", mGyro.y), 50, 200, textPaint);
-                    canvas.drawText("Gyro Z : " + String.format("%.1f", mGyro.z), 50, 300, textPaint);
+                    canvas.drawText("Acceleration X : " + String.format("%.1f", mAccelero.x), 50, 100, textPaint);
+                    canvas.drawText("Acceleration Y : " + String.format("%.1f", mAccelero.y), 50, 200, textPaint);
+                    canvas.drawText("Acceleration Z : " + String.format("%.1f", mAccelero.z), 50, 300, textPaint);
                     canvas.drawText("Light : "+String.valueOf(mLumen.currentLux), 50, 400, textPaint);
                     canvas.drawText("MinLight : "+String.valueOf(mLumen.minLux), 50, 500, textPaint);
                     canvas.drawText("MaxLight : "+String.valueOf(mLumen.maxLux), 50, 600, textPaint);
+
+                    mCurrentTime = System.currentTimeMillis() - mBeginningTime;
+                    canvas.drawText("Time : " + String.valueOf((int)(mCurrentTime/1000)),500,100,textPaint);
+
                     mSurfaceHolder.unlockCanvasAndPost(canvas);
                 }
             }

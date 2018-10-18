@@ -22,7 +22,7 @@ public class Lumen implements SensorEventListener
 
     protected void onResume() {
         if(mSensorManager!=null){
-            mSensorManager.registerListener(this,mLight,SensorManager.SENSOR_DELAY_FASTEST);
+            mSensorManager.registerListener(this,mLight,SensorManager.SENSOR_DELAY_GAME);
         }
     }
 

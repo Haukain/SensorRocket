@@ -6,21 +6,21 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
-public class Gyro implements SensorEventListener {
+public class Accelero implements SensorEventListener {
     public float x = 0;
     public float y = 0;
     public float z = 0;
     private SensorManager mSensorManager;
-    private Sensor mGyroscope;
+    private Sensor mAccelerometer;
 
-    public Gyro(Context context){
+    public Accelero(Context context){
         mSensorManager =(SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        mGyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     }
 
     protected void onResume() {
         if(mSensorManager!=null){
-            mSensorManager.registerListener(this,mGyroscope,SensorManager.SENSOR_DELAY_GAME);
+            mSensorManager.registerListener(this,mAccelerometer,SensorManager.SENSOR_DELAY_GAME);
         }
     }
 
