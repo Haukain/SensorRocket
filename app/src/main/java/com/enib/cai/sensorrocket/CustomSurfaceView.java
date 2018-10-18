@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.RectF;
 import android.graphics.Region;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -20,6 +21,11 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     private long mBeginningTime;
     private long mCurrentTime;
+    private int mCurrentTimeInSecond;
+
+    private int mEnnemySpawnCountdown;
+    private long mlastEnnemySpawn;
+
     private Rocket mRocket;
     private Vector<Ennemy> mEnnemy;
     private Thread mThread;
@@ -36,6 +42,9 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         mBeginningTime = System.currentTimeMillis();
         mCurrentTime = mBeginningTime;
+
+        mEnnemySpawnCountdown=2000;
+        mlastEnnemySpawn=0;
 
         mRocket = new Rocket();
         mSurfaceHolder = getHolder();
@@ -80,16 +89,20 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
             if(mRocketPosUnset)
             {
                 if(this.getWidth()!=0) {
-                    mRocket.setPosition(new Point(this.getWidth() / 2, this.getHeight() - 150));
+                    mRocket.setPosition(new Point(this.getWidth() / 2, this.getHeight() - 250));
                     mRocketPosUnset = false;
                 }
             }
             // Making sure we don't run any loop while the rocket has no position
             else {
+                mCurrentTime = System.currentTimeMillis() - mBeginningTime;
+                mCurrentTimeInSecond = (int)mCurrentTime/1000;
 
                 // Random test to see if we should add an ennemy to the ennemy vector
-                if (Math.random() < 0.05 && mEnnemy.size()<30) {
+                if( (mCurrentTime-mlastEnnemySpawn)>(mEnnemySpawnCountdown/(1 + mCurrentTimeInSecond/10)) )
+                {
                     mEnnemy.add(new Ennemy(this.getWidth()));
+                    mlastEnnemySpawn=mCurrentTime;
                 }
 
                 // Drawing loop
@@ -167,8 +180,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     canvas.drawText("MinLight : "+String.valueOf(mLumen.minLux), 50, 500, textPaint);
                     canvas.drawText("MaxLight : "+String.valueOf(mLumen.maxLux), 50, 600, textPaint);
 
-                    mCurrentTime = System.currentTimeMillis() - mBeginningTime;
-                    canvas.drawText("Time : " + String.valueOf((int)(mCurrentTime/1000)),500,100,textPaint);
+                    canvas.drawText("Time : " + String.valueOf(mCurrentTimeInSecond),500,100,textPaint);
+                    canvas.drawText("nb Ennemies"+String.valueOf(mEnnemy.size()),500,200,textPaint);
 
                     mSurfaceHolder.unlockCanvasAndPost(canvas);
                 }

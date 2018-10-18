@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.RectF;
 
 public class Rocket {
 
@@ -27,7 +28,9 @@ public class Rocket {
 
     public Path drawRocket() {
         Path path = new Path();
+        path.setFillType(Path.FillType.EVEN_ODD);
 
+        /*
         path.setFillType(Path.FillType.EVEN_ODD);
         path.moveTo(mPosition.x, mPosition.y);
         path.lineTo(mPosition.x - 27, mPosition.y);
@@ -40,6 +43,19 @@ public class Rocket {
         path.lineTo(mPosition.x + 26, mPosition.y - 50);
         path.lineTo(mPosition.x + 27, mPosition.y);
         path.lineTo(mPosition.x, mPosition.y);
+        path.close();
+        */
+
+        RectF oval = new RectF(mPosition.x-25,mPosition.y-150,mPosition.x+25,mPosition.y+150);
+        RectF rightOval =  new RectF(mPosition.x,mPosition.y,mPosition.x+50,mPosition.y+150);
+        RectF leftOval =  new RectF(mPosition.x-50,mPosition.y,mPosition.x,mPosition.y+150);
+
+        path.arcTo(oval,180F,90F,true);
+        path.arcTo(oval,270F,90F);
+        path.arcTo(rightOval,270F,90F);
+        path.lineTo(mPosition.x,mPosition.y+25);
+        path.lineTo(mPosition.x-50,mPosition.y+75);
+        path.arcTo(leftOval,180F,90F);
         path.close();
 
         return path;
