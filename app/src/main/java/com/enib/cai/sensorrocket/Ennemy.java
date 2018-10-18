@@ -12,6 +12,7 @@ public class Ennemy {
     private int mOffset;
     private Point mPosition;
     private Paint mPaint;
+    private boolean mHit;
 
     public Ennemy(int maxWidth)
     {
@@ -19,6 +20,8 @@ public class Ennemy {
         mSize = (int)(Math.random()*50 + 30);
         mOffset = (int)(Math.random()*mSize/2);
         mPosition = new Point((int)(Math.random()*maxWidth),-80);
+
+        mHit = false;
 
         mPaint = new Paint();
         mPaint.setStrokeWidth(4);
@@ -66,4 +69,16 @@ public class Ennemy {
     {
         return mPaint;
     }
+
+    public void setPaint(int a,int r,int g, int b)
+    {
+        mPaint.setColor(Color.argb(a,r,g,b));
+    }
+
+    public void setHit(boolean state) {
+        mHit = state;
+        mPaint.setAlpha(50);
+    }
+
+    public boolean getHit() { return mHit; }
 }

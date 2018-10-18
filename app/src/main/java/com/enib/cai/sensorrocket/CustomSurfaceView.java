@@ -9,6 +9,7 @@ import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.Toast;
@@ -19,6 +20,9 @@ import java.util.Vector;
 
 public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Callback,Runnable{
 
+    private Thread mThread;
+    private boolean mRunning;
+
     private long mBeginningTime;
     private long mCurrentTime;
     private int mCurrentTimeInSecond;
@@ -28,33 +32,39 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     private Rocket mRocket;
     private Vector<Ennemy> mEnnemy;
-    private Thread mThread;
+    private int mbgColor;
+    private boolean mRocketPosUnset;
+
+    private Region mTouchHitBox;
+
     private Accelero mAccelero;
     //private Gyro mGyro;
     private Lumen mLumen;
+
     private SurfaceHolder mSurfaceHolder;
-    private boolean mRunning;
-    private int mbgColor;
-    private boolean mRocketPosUnset;
 
     public CustomSurfaceView (Context context){
         super(context);
 
         mBeginningTime = System.currentTimeMillis();
         mCurrentTime = mBeginningTime;
-
         mEnnemySpawnCountdown=2000;
         mlastEnnemySpawn=0;
 
         mRocket = new Rocket();
-        mSurfaceHolder = getHolder();
-        mSurfaceHolder.addCallback(this);
+        mEnnemy = new Vector<Ennemy>();
+        mbgColor = Color.argb(255,135, 206, 235);
+        mRocketPosUnset = true;
+
+        mTouchHitBox = new Region();
+
         mAccelero = new Accelero(context);
         //mGyro = new Gyro(context);
         mLumen = new Lumen(context);
-        mbgColor = Color.argb(255,135, 206, 235);
-        mEnnemy = new Vector<Ennemy>();
-        mRocketPosUnset = true;
+
+        mSurfaceHolder = getHolder();
+        mSurfaceHolder.addCallback(this);
+
     }
 
     public void onPause()
@@ -153,6 +163,11 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                             }
                         }
 
+                        if (!mTouchHitBox.quickReject(ennemyHitBox) && mTouchHitBox.op(ennemyHitBox, Region.Op.INTERSECT)) {
+                            //Hit Ennemy if touched
+                            e.setHit(true);
+                        }
+
                         //Drawing the Ennemy
                         canvas.drawPath(ennemyPath,e.getPaint());
 
@@ -189,7 +204,23 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         }
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent e)
+    {
+        if(e.getAction()==MotionEvent.ACTION_DOWN)
+        {
+            float x = e.getX();
+            float y = e.getY();
 
+            Path touchPath = new Path();
+            touchPath.addCircle(x,y,50, Path.Direction.CW);
+
+            mTouchHitBox.setPath(touchPath,new Region(0,0,this.getWidth(),this.getHeight()));
+
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
