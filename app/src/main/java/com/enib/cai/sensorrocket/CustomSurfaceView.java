@@ -34,6 +34,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     // Scene Elements
     private Rocket mRocket;
     private Vector<Point> mRocketSmoke;
+    private int mRocketExplosion;
     private Vector<Ennemy> mEnnemy;
     private int mbgColor;
     private boolean mRocketPosUnset;
@@ -65,6 +66,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         mRocket = new Rocket();
         mRocketSmoke = new Vector<>();
+        mRocketExplosion = 30;
         mEnnemy = new Vector<>();
         //mbgColor = Color.argb(255,135, 206, 235);
         mbgColor = Color.argb(255,18, 62, 135);
@@ -141,26 +143,39 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         bgPaint.setColor(mbgColor);
                         canvas.drawPaint(bgPaint);
 
-                        //Drawing animation
-                        Paint smokePaint = new Paint();
-                        smokePaint.setColor(Color.argb((int) (Math.random() * 50 + 50), 255, 255, 255));
-                        if (mRocketSmoke.size() < 20)
-                            mRocketSmoke.add(new Point(mRocket.getPosition().x, mRocket.getPosition().y + 30));
-                        Iterator<Point> pi = mRocketSmoke.iterator();
-                        while (pi.hasNext()) {
-                            Point p = pi.next();
-                            canvas.drawCircle(p.x, p.y, (int) (Math.random() * 25 + 20), smokePaint);
-                            if (p.y > this.getHeight() + 50) pi.remove();
-                            else p.set(p.x + (int) (Math.random() * 10 - 5), p.y + 20);
-                        }
 
-                        //Getting Rocket Path
-                        Path rocketPath = mRocket.drawRocket();
-                        //Getting Rocket Hitbox
                         Region rocketHitBox = new Region();
-                        rocketHitBox.setPath(rocketPath, new Region(0, 0, this.getWidth(), this.getHeight()));
-                        //Drawing Rocket
-                        canvas.drawPath(rocketPath, mRocket.getPaint());
+                        if(mRocket.isAlive()) {
+                            //Drawing animation
+                            Paint smokePaint = new Paint();
+                            smokePaint.setColor(Color.argb((int) (Math.random() * 50 + 50), 255, 255, 255));
+                            if (mRocketSmoke.size() < 20)
+                                mRocketSmoke.add(new Point(mRocket.getPosition().x, mRocket.getPosition().y + 30));
+                            Iterator<Point> pi = mRocketSmoke.iterator();
+                            while (pi.hasNext()) {
+                                Point p = pi.next();
+                                canvas.drawCircle(p.x, p.y, (int) (Math.random() * 25 + 20), smokePaint);
+                                if (p.y > this.getHeight() + 50) pi.remove();
+                                else p.set(p.x + (int) (Math.random() * 10 - 5), p.y + 20);
+                            }
+
+                            //Getting Rocket Path
+                            Path rocketPath = mRocket.drawRocket();
+                            //Getting Rocket Hitbox
+                            rocketHitBox.setPath(rocketPath, new Region(0, 0, this.getWidth(), this.getHeight()));
+                            //Drawing Rocket
+                            canvas.drawPath(rocketPath, mRocket.getPaint());
+                        }
+                        else{
+                            //Drawing explosion animation
+                            Paint explosionPaint = new Paint();
+                            for(int i=0;i<mRocketExplosion;i++)
+                            {
+                                explosionPaint.setColor(Color.argb((int) (Math.random() * 50 + 50), 255, (int) (Math.random() * 255), 0));
+                                canvas.drawCircle(mRocket.getPosition().x, mRocket.getPosition().y, (int) (Math.random() * 100 + 100), explosionPaint);
+                            }
+                            mRocketExplosion--;
+                        }
 
                         //Updating the rocket position
                         float acceleroOffset = Math.abs(mAccelero.x) > 0.2 ? (-mAccelero.x * 3) : 0;
@@ -182,7 +197,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                             Region ennemyHitBox = new Region();
                             ennemyHitBox.setPath(ennemyPath, new Region(0, 0, this.getWidth(), this.getHeight()));
 
-                            if (!hitThisLoop) {
+                            if (!hitThisLoop && !e.getHit()) {
                                 //Checking for collision only if not hit this loop
                                 if (!rocketHitBox.quickReject(ennemyHitBox) && rocketHitBox.op(ennemyHitBox, Region.Op.INTERSECT)) {
                                     //If not alread hit and currently hit, set "hit" to 1
@@ -281,6 +296,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         mRocket = new Rocket();
         mRocketSmoke = new Vector<>();
+        mRocketExplosion = 30;
         mEnnemy = new Vector<>();
         //mbgColor = Color.argb(255,135, 206, 235);
         mbgColor = Color.argb(255,18, 62, 135);

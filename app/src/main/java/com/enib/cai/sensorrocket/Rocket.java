@@ -14,11 +14,14 @@ public class Rocket {
     private Point mPosition;
     private boolean mHit;
 
+    private int mLife;
+
     public Rocket()
     {
         mRocketOffset = 0;
         mPosition = new Point(0,0);
         mHit = false;
+        mLife = 1;
 
         mPaint = new Paint();
         mPaint.setStrokeWidth(4);
@@ -96,8 +99,15 @@ public class Rocket {
     public void setHit(boolean state) // Setting hit boolean and changing paint to "hit" paint
     {
         mHit = state;
-        if(state==true) setPaint(255,127,127,127);
-        else setPaint();
+        if(state==true)
+        {
+            mLife--;
+        }
+    }
+
+    public boolean isAlive()
+    {
+        return (mLife>0);
     }
 
 }
