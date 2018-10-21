@@ -1,5 +1,6 @@
 package com.enib.cai.sensorrocket;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -26,6 +27,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private long mCurrentTime;
     private int mCurrentTimeInSecond;
     private long mTimeInPause;
+    private long mPrevEventTime;
+    private long mProxEventTime;
 
     // Ennemy spawning
     private int mEnnemySpawnCountdown;
@@ -46,6 +49,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private Accelero mAccelero;
     //private Gyro mGyro;
     private Lumen mLumen;
+    private Proximity mProximity;
 
     // Holder for canvas
     private SurfaceHolder mSurfaceHolder;
@@ -61,6 +65,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         mBeginningTime = System.currentTimeMillis();
         mCurrentTime = 0;
+        mPrevEventTime = 0;
+        mProxEventTime = 0;
         mEnnemySpawnCountdown=2000;
         mlastEnnemySpawn=0;
 
@@ -77,6 +83,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mAccelero = new Accelero(context);
         //mGyro = new Gyro(context);
         mLumen = new Lumen(context);
+        mProximity = new Proximity(context);
 
         mSurfaceHolder = getHolder();
         mSurfaceHolder.addCallback(this);
@@ -89,6 +96,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mAccelero.onPause();
         //mGyro.onPause();
         mLumen.onPause();
+        mProximity.onPause();
         mRunning = false;
         try {
             mThread.join();
@@ -103,6 +111,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mAccelero.onResume();
         //mGyro.onResume();
         mLumen.onResume();
+        mProximity.onResume();
         mRunning = true;
         mThread = new Thread(this);
         mThread.start();
@@ -112,6 +121,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     @Override
     public void run() {
         Canvas canvas;
+        boolean prox;
         while (mRunning) {
 
             if(!mPaused) {
@@ -140,6 +150,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
                         //Painting background
                         Paint bgPaint = new Paint();
+                        mbgColor = Color.argb(255,mLumen.currentLux*30/30000,mLumen.currentLux*100/30000, mLumen.currentLux*255/30000);
                         bgPaint.setColor(mbgColor);
                         canvas.drawPaint(bgPaint);
 
@@ -186,6 +197,39 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
                         boolean hitThisLoop = false;
 
+                        //Time before next TouchEvent
+                        Paint waitingPaint = new Paint();
+                        waitingPaint.setColor(Color.WHITE);
+                        long diff = mCurrentTime-mPrevEventTime;
+                        if (diff>=3000)
+                        {
+                            waitingPaint.setColor(Color.GREEN);
+                            canvas.drawCircle(this.getWidth()-150 , this.getHeight()-100,50,waitingPaint);
+                            waitingPaint.setColor(Color.WHITE);
+                        }
+                        else
+                        {
+                            canvas.drawArc(this.getWidth()-200 , this.getHeight()-150,this.getWidth()-100,this.getHeight()-50,270-(float)diff/3000*360,(float)diff/3000*360,true,waitingPaint);
+                        }
+
+                        //Time before next ProximityEvent
+                        long dif = mCurrentTime-mProxEventTime;
+                        if (dif>=10000)
+                        {
+                            waitingPaint.setColor(Color.GREEN);
+                            canvas.drawCircle(this.getWidth()-150 , this.getHeight()-300,50,waitingPaint);
+                        }
+                        else
+                        {
+                            canvas.drawArc(this.getWidth()-200 , this.getHeight()-350,this.getWidth()-100,this.getHeight()-250,270-(float)dif/10000*360,(float)dif/10000*360,true,waitingPaint);
+                        }
+
+                        if ((mProximity.getDistance() == 0)&(dif>=10000)) {
+                            mProxEventTime = mCurrentTime;
+                            prox = true;
+                        }
+                        else{prox = false;}
+
                         //Iterating the ennemy vector
                         Iterator<Ennemy> it = mEnnemy.iterator();
                         while (it.hasNext()) {
@@ -212,9 +256,14 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                                 //Hit Ennemy if touched
                                 e.setHit(true);
                             }
-                            if (mLumen.currentLux > 1000) {
+                            /*if (mLumen.currentLux > 1000) {
+                                e.setHit(true);
+                            }*/
+
+                            if (prox == true) {
                                 e.setHit(true);
                             }
+
 
                             //Drawing the Ennemy
                             canvas.drawPath(ennemyPath, e.getPaint());
@@ -237,6 +286,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         textPaint.setColor(Color.WHITE);
                         textPaint.setTextSize(80);
                         canvas.drawText("SCORE : " + String.valueOf(mCurrentTimeInSecond), this.getWidth() / 2, 100, textPaint);
+
+
                     /*
                     canvas.drawText("Acceleration X : " + String.format("%.1f", mAccelero.x), 50, 100, textPaint);
                     canvas.drawText("Acceleration Y : " + String.format("%.1f", mAccelero.y), 50, 200, textPaint);
@@ -247,7 +298,6 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     canvas.drawText("Time : " + String.valueOf(mCurrentTimeInSecond),500,100,textPaint);
                     canvas.drawText("nb Ennemies"+String.valueOf(mEnnemy.size()),500,200,textPaint);
                     */
-
                         mSurfaceHolder.unlockCanvasAndPost(canvas);
                     }
                 }
@@ -263,18 +313,21 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     @Override
     public boolean onTouchEvent(MotionEvent e)
     {
-        if(e.getAction()==MotionEvent.ACTION_DOWN)
-        {
-            float x = e.getX();
-            float y = e.getY();
+        if(mCurrentTime-mPrevEventTime>=3000) {
+            if (e.getAction() == MotionEvent.ACTION_DOWN) {
+                float x = e.getX();
+                float y = e.getY();
 
-            Path touchPath = new Path();
-            touchPath.addCircle(x,y,50, Path.Direction.CW);
+                Path touchPath = new Path();
+                touchPath.addCircle(x, y, 50, Path.Direction.CW);
 
-            // Creating hitbox to collide with ennemies
-            mTouchHitBox.setPath(touchPath,new Region(0,0,this.getWidth(),this.getHeight()));
+                // Creating hitbox to collide with ennemies
+                mTouchHitBox.setPath(touchPath, new Region(0, 0, this.getWidth(), this.getHeight()));
+                mPrevEventTime = mCurrentTime;
 
-            return true;
+                return true;
+            }
+            return false;
         }
         return false;
     }
@@ -291,6 +344,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         mBeginningTime = System.currentTimeMillis();
         mCurrentTime = 0;
+        mPrevEventTime = 0;
+        mProxEventTime = 0;
         mEnnemySpawnCountdown=2000;
         mlastEnnemySpawn=0;
 
@@ -302,6 +357,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mbgColor = Color.argb(255,18, 62, 135);
         mRocketPosUnset = true;
     }
+
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
