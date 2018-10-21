@@ -1,6 +1,8 @@
 package com.enib.cai.sensorrocket;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -16,6 +18,9 @@ import java.util.Iterator;
 import java.util.Vector;
 
 public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Callback,Runnable{
+
+    // Listener
+    GameListener mListener;
 
     // Thread related
     private Thread mThread;
@@ -59,10 +64,9 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     // End flag
     private boolean mEnded;
 
-    public CustomSurfaceView (Context context){
+    public CustomSurfaceView (Context context,GameListener listener){
         super(context);
-
-        mTouchHitBox = new Region();
+        mListener = listener;
 
         mAccelero = new Accelero(context);
         //mGyro = new Gyro(context);
@@ -93,6 +97,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mEnnemy = new Vector<>();
         mbgColor = Color.argb(255,18, 62, 135);
         mRocketPosUnset = true;
+
+        mTouchHitBox = new Region();
     }
 
     // Activity onPause
@@ -126,6 +132,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     public void run() {
         Canvas canvas;
         while (mRunning) {
+
+            mTouchHitBox = new Region();
 
             if(!mPaused && !mEnded) {
                 // Setting the rocket position for the first time
@@ -292,6 +300,17 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     textPaint.setTextSize(80);
                     canvas.drawText("SCORE : " + String.valueOf(mScore), this.getWidth() / 2, 100, textPaint);
 
+                    Path sendScoreBox = new Path();
+                    sendScoreBox.addRect(0,this.getHeight()/2 - 100,this.getWidth(),this.getHeight()/2 + 100,Path.Direction.CW);
+                    Region sendScoreHitBox = new Region();
+                    sendScoreHitBox.setPath(sendScoreBox, new Region(0, 0, this.getWidth(), this.getHeight()));
+                    if (!mTouchHitBox.quickReject(sendScoreHitBox) && mTouchHitBox.op(sendScoreHitBox, Region.Op.INTERSECT)) {
+                        //Hit Ennemy if touched
+                        sendSMS();
+                    }
+
+                    canvas.drawPath(sendScoreBox,new Paint());
+
                     mSurfaceHolder.unlockCanvasAndPost(canvas);
                 }
             }
@@ -318,9 +337,19 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         return false;
     }
 
+    public void sendSMS()
+    {
+        mListener.smsCallback();
+    }
+
     public boolean getPaused()
     {
         return mPaused;
+    }
+
+    public int getScore()
+    {
+        return mScore;
     }
 
     public void onPauseClick()
