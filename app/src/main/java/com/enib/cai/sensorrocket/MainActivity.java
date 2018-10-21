@@ -31,14 +31,15 @@ public class MainActivity extends AppCompatActivity {
 
         mButtonLayout = new LinearLayout(this);
 
-        final Context that = this;
-        Button pauseButton = new Button(this);
+        final Button pauseButton = new Button(this);
         pauseButton.setText("Pause");
         pauseButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         ((CustomSurfaceView)mGameLayout.findViewById(1)).onPauseClick();
+                        if (((CustomSurfaceView)mGameLayout.findViewById(1)).getPaused()) pauseButton.setText("Play");
+                        else pauseButton.setText("Pause");
                     }
                 }
         );

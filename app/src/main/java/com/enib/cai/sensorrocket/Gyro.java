@@ -33,7 +33,6 @@ public class Gyro implements SensorEventListener {
         x = event.values[0];
         y = event.values[1];
         z = event.values[2];
-        //Log.v("update","x : " + String.valueOf(x)+" y : " + String.valueOf(y)+" z : " + String.valueOf(z));
     }
 
     @Override
