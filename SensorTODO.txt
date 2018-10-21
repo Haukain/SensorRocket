@@ -1,0 +1,8 @@
+- Améliorer les bonus (temps de récupération et animation)
+- Rajouter un bonus avec le capteur de proximité (invisibilité)
+- Améliorer les ennemis (formes)
+- Ne calculer les collisions seulement quand nécéssaire (y autour de fusée)
+- Se faire toucher une seule fois quand on touche un ennemi
+- Animation fin et pause une fois fini
+- Difficulté du jeu
+- Sons / bruitages ?
