@@ -13,6 +13,7 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Region;
 import android.graphics.Shader;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Vibrator;
 import android.provider.MediaStore;
@@ -39,12 +40,14 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private long mTimeInPause;
     private long mPrevEventTime;
     private long mProxEventTime;
+    private int mTouchCooldown;
+    private int mProxCooldown;
 
     // Score
     private int mScore;
 
     // Ennemy spawning
-    private int mEnnemySpawnCountdown;
+    private int mEnnemySpawnCooldown;
     private long mlastEnnemySpawn;
 
     // Scene Elements
@@ -54,8 +57,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private Vector<Ennemy> mEnnemy;
     private int mbgColor;
     private boolean mRocketPosUnset;
-    private Bitmap mTouchLogo;
-    private Bitmap mProximityLogo;
+    private Drawable mTouchLogo;
+    private Drawable mProximityLogo;
 
     // On touch hitbox
     private Region mTouchHitBox;
@@ -92,7 +95,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mSurfaceHolder = getHolder();
         mSurfaceHolder.addCallback(this);
 
-        //mTouchLogo = BitmapFactory.decodeResource(context.getResources(), R.drawable.touch);
+        mTouchLogo = getResources().getDrawable( R.drawable.ic_touch );
+        mProximityLogo = getResources().getDrawable( R.drawable.ic_proximity );
 
         init();
     }
@@ -109,14 +113,16 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mCurrentTime = 0;
         mPrevEventTime = 0;
         mProxEventTime = 0;
-        mEnnemySpawnCountdown=2000;
+        mEnnemySpawnCooldown=2000;
+        mTouchCooldown = 3000;
+        mProxCooldown = 10000;
         mlastEnnemySpawn=0;
 
         mRocket = new Rocket();
         mRocketSmoke = new Vector<>();
         mRocketExplosion = 30;
         mEnnemy = new Vector<>();
-        mbgColor = Color.argb(255,18, 62, 135);
+        mbgColor = Color.argb(255,3,33, 84);
         mRocketPosUnset = true;
 
         mTouchHitBox = new Region();
@@ -157,7 +163,6 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         while (mRunning) {
 
             mTouchHitBox = new Region();
-            mbgColor = Color.argb(255,mLumen.currentLux*30/30000,mLumen.currentLux*100/30000, mLumen.currentLux*255/30000);
 
             if(!mPaused && !mEnded) {
                 // Setting the rocket position for the first time
@@ -179,7 +184,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         if(mRocket.isAlive()) mScore = mCurrentTimeInSecond;
 
                         // Testing if ennemy should appear
-                        if ((mCurrentTime - mlastEnnemySpawn) > (mEnnemySpawnCountdown / (1 + mCurrentTimeInSecond / 10))) {
+                        if ((mCurrentTime - mlastEnnemySpawn) > (mEnnemySpawnCooldown / (1 + mCurrentTimeInSecond / 10))) {
                             mEnnemy.add(new Ennemy(this.getWidth()));
                             mlastEnnemySpawn = mCurrentTime;
                         }
@@ -216,7 +221,10 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                             Paint explosionPaint = new Paint();
                             for(int i=0;i<mRocketExplosion;i++)
                             {
-                                explosionPaint.setColor(Color.argb((int) (Math.random() * 50), 255, (int) (Math.random() * 255), 0));
+                                explosionPaint.setColor(Color.argb((int) (Math.random() * 255), 255, 255, 255));
+                                explosionPaint.setStyle(Paint.Style.STROKE);
+                                explosionPaint.setStrokeWidth(5);
+                                explosionPaint.setAntiAlias(true);
                                 canvas.drawCircle(mRocket.getPosition().x, mRocket.getPosition().y, (int) (Math.random() * 100 + 100), explosionPaint);
                             }
                             mRocketExplosion--;
@@ -230,15 +238,12 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         else if (newX < 0) newX = 0;
                         mRocket.setPosition(new Point((int) newX, mRocket.getPosition().y));
 
-                        boolean hitThisLoop = false;
-
                         //Time before next TouchEvent
                         Paint waitingPaint = new Paint();
                         waitingPaint.setColor(Color.WHITE);
                         waitingPaint.setStyle(Paint.Style.STROKE);
                         waitingPaint.setStrokeWidth(20);
-                        long diff = mCurrentTime-mPrevEventTime;
-                        if (diff>=3000)
+                        if ((mCurrentTime-mPrevEventTime)>=mTouchCooldown)
                         {
                             waitingPaint.setColor(Color.GREEN);
                             canvas.drawCircle(100, 250,75,waitingPaint);
@@ -246,26 +251,35 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         }
                         else
                         {
-                            canvas.drawArc(25 , 175,175,325,270,(float)diff/3000*360,false,waitingPaint);
+                            canvas.drawArc(25 , 175,175,325,270,(float)(mCurrentTime-mPrevEventTime)/mTouchCooldown*360,false,waitingPaint);
                         }
 
                         //Time before next ProximityEvent
-                        long dif = mCurrentTime-mProxEventTime;
-                        if (dif>=10000)
+                        boolean prox = false;
+                        if ((mProximity.getDistance() == 0)&((mCurrentTime-mProxEventTime)>=mProxCooldown)) {
+                            mProxEventTime = mCurrentTime;
+                            mVibrator.vibrate(500);
+                            prox = true;
+                        }
+                        if ((mCurrentTime-mProxEventTime)>=mProxCooldown)
                         {
                             waitingPaint.setColor(Color.GREEN);
                             canvas.drawCircle(100 , 450,75,waitingPaint);
                         }
                         else
                         {
-                            canvas.drawArc(25, 375,175,525,270,(float)dif/10000*360,false,waitingPaint);
+                            canvas.drawArc(25, 375,175,525,270,(float)(mCurrentTime-mProxEventTime)/mProxCooldown*360,false,waitingPaint);
                         }
-                        boolean prox = false;
-                        if ((mProximity.getDistance() == 0)&(dif>=10000)) {
-                            mProxEventTime = mCurrentTime;
-                            mVibrator.vibrate(500);
-                            prox = true;
-                        }
+                        int dx = 60, dy = 210;
+                        canvas.translate(dx,dy);
+                        mTouchLogo.setBounds(0, 0, 80, 80);
+                        mTouchLogo.draw(canvas);
+                        canvas.translate(-dx,-dy);
+                        dx = 60; dy = 410;
+                        canvas.translate(dx,dy);
+                        mProximityLogo.setBounds(0, 0, 80, 80);
+                        mProximityLogo.draw(canvas);
+                        canvas.translate(-dx,-dy);
 
                         //Iterating the ennemy vector
                         Iterator<Ennemy> it = mEnnemy.iterator();
@@ -355,7 +369,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     Paint textPaint = new Paint();
                     textPaint.setColor(Color.WHITE);
                     textPaint.setTextSize(80);
-                    canvas.drawText("SCORE FINAL :",this.getWidth() / 2 - 250, this.getHeight()/2 - 300,textPaint);
+                    canvas.drawText("FINAL SCORE :",this.getWidth() / 2 - 250, this.getHeight()/2 - 300,textPaint);
                     canvas.drawText(String.valueOf(mScore), this.getWidth() / 2 - 50, this.getHeight()/2 - 200, textPaint);
 
                     Path sendScoreBox = new Path();
