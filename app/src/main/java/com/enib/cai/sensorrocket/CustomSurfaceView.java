@@ -1,6 +1,8 @@
 package com.enib.cai.sensorrocket;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -16,6 +18,9 @@ import java.util.Vector;
 
 public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Callback,Runnable{
 
+    // Listener
+    GameListener mListener;
+
     // Thread related
     private Thread mThread;
     private boolean mRunning;
@@ -27,6 +32,9 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private long mTimeInPause;
     private long mPrevEventTime;
     private long mProxEventTime;
+
+    // Score
+    private int mScore;
 
     // Ennemy spawning
     private int mEnnemySpawnCountdown;
@@ -55,8 +63,28 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     //Pause Flag
     private boolean mPaused;
 
-    public CustomSurfaceView (Context context){
+    // End flag
+    private boolean mEnded;
+
+    public CustomSurfaceView (Context context,GameListener listener){
         super(context);
+        mListener = listener;
+
+        mAccelero = new Accelero(context);
+        //mGyro = new Gyro(context);
+        mLumen = new Lumen(context);
+        mProximity = new Proximity(context);
+
+        mSurfaceHolder = getHolder();
+        mSurfaceHolder.addCallback(this);
+
+        init();
+    }
+
+    public void init()
+    {
+        mEnded = false;
+        mScore = 0;
 
         mPaused = false;
         mTimeInPause = 0;
@@ -72,25 +100,16 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         mRocketSmoke = new Vector<>();
         mRocketExplosion = 30;
         mEnnemy = new Vector<>();
-        //mbgColor = Color.argb(255,135, 206, 235);
         mbgColor = Color.argb(255,18, 62, 135);
         mRocketPosUnset = true;
 
         mTouchHitBox = new Region();
-
-        mAccelero = new Accelero(context);
-        //mGyro = new Gyro(context);
-        mLumen = new Lumen(context);
-        mProximity = new Proximity(context);
-
-        mSurfaceHolder = getHolder();
-        mSurfaceHolder.addCallback(this);
-
     }
 
     // Activity onPause
     public void onPause()
     {
+        mPaused=true;
         mAccelero.onPause();
         //mGyro.onPause();
         mLumen.onPause();
@@ -100,7 +119,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
             mThread.join();
         } catch (InterruptedException e)
         {
-
+            // catch error
         }
     }
 
@@ -119,10 +138,12 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     @Override
     public void run() {
         Canvas canvas;
-        boolean prox;
+
         while (mRunning) {
 
-            if(!mPaused) {
+            mTouchHitBox = new Region();
+
+            if(!mPaused && !mEnded) {
                 // Setting the rocket position for the first time
                 if (mRocketPosUnset) {
                     if (this.getWidth() != 0) {
@@ -139,6 +160,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         // Updating Time
                         mCurrentTime = System.currentTimeMillis() - mBeginningTime - mTimeInPause;
                         mCurrentTimeInSecond = (int) mCurrentTime / 1000;
+                        if(mRocket.isAlive()) mScore = mCurrentTimeInSecond;
 
                         // Testing if ennemy should appear
                         if ((mCurrentTime - mlastEnnemySpawn) > (mEnnemySpawnCountdown / (1 + mCurrentTimeInSecond / 10))) {
@@ -147,11 +169,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         }
 
                         //Painting background
-                        Paint bgPaint = new Paint();
                         mbgColor = Color.argb(255,mLumen.currentLux*30/30000,mLumen.currentLux*100/30000, mLumen.currentLux*255/30000);
-                        bgPaint.setColor(mbgColor);
-                        canvas.drawPaint(bgPaint);
-
+                        canvas.drawColor(mbgColor);
 
                         Region rocketHitBox = new Region();
                         if(mRocket.isAlive()) {
@@ -176,6 +195,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                             canvas.drawPath(rocketPath, mRocket.getPaint());
                         }
                         else{
+
                             //Drawing explosion animation
                             Paint explosionPaint = new Paint();
                             for(int i=0;i<mRocketExplosion;i++)
@@ -184,6 +204,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                                 canvas.drawCircle(mRocket.getPosition().x, mRocket.getPosition().y, (int) (Math.random() * 100 + 100), explosionPaint);
                             }
                             mRocketExplosion--;
+                            if(mRocketExplosion<0) mEnded=true;
                         }
 
                         //Updating the rocket position
@@ -221,12 +242,11 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         {
                             canvas.drawArc(this.getWidth()-200 , this.getHeight()-350,this.getWidth()-100,this.getHeight()-250,270-(float)dif/10000*360,(float)dif/10000*360,true,waitingPaint);
                         }
-
+                        boolean prox = false;
                         if ((mProximity.getDistance() == 0)&(dif>=10000)) {
                             mProxEventTime = mCurrentTime;
                             prox = true;
                         }
-                        else{prox = false;}
 
                         //Iterating the ennemy vector
                         Iterator<Ennemy> it = mEnnemy.iterator();
@@ -258,7 +278,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                                 }
                             }
 
-                            if (prox == true) {
+                            if (prox) {
                                 e.setHit(true);
                             }
 
@@ -283,26 +303,62 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         Paint textPaint = new Paint();
                         textPaint.setColor(Color.WHITE);
                         textPaint.setTextSize(80);
-                        canvas.drawText("SCORE : " + String.valueOf(mCurrentTimeInSecond), this.getWidth() / 2, 100, textPaint);
+                        canvas.drawText("SCORE : " + String.valueOf(mScore), this.getWidth() / 2, 100, textPaint);
 
-
-                    /*
-                    canvas.drawText("Acceleration X : " + String.format("%.1f", mAccelero.x), 50, 100, textPaint);
-                    canvas.drawText("Acceleration Y : " + String.format("%.1f", mAccelero.y), 50, 200, textPaint);
-                    canvas.drawText("Acceleration Z : " + String.format("%.1f", mAccelero.z), 50, 300, textPaint);
-                    canvas.drawText("Light : "+String.valueOf(mLumen.currentLux), 50, 400, textPaint);
-                    canvas.drawText("MinLight : "+String.valueOf(mLumen.minLux), 50, 500, textPaint);
-                    canvas.drawText("MaxLight : "+String.valueOf(mLumen.maxLux), 50, 600, textPaint);
-                    canvas.drawText("Time : " + String.valueOf(mCurrentTimeInSecond),500,100,textPaint);
-                    canvas.drawText("nb Ennemies"+String.valueOf(mEnnemy.size()),500,200,textPaint);
-                    */
                         mSurfaceHolder.unlockCanvasAndPost(canvas);
                     }
                 }
             }
-            else
+            else if (mPaused && !mEnded)
             {
                 mTimeInPause = System.currentTimeMillis() - mBeginningTime - mCurrentTime;
+            }
+            else if (mEnded)
+            {
+                if (mSurfaceHolder.getSurface().isValid()) {
+                    canvas = mSurfaceHolder.lockCanvas();
+
+                    canvas.drawColor(mbgColor);
+
+                    //Iterating the ennemy vector
+                    Iterator<Ennemy> it = mEnnemy.iterator();
+                    while (it.hasNext()) {
+                        Ennemy e = it.next();
+
+                        //Getting Ennemy Path
+                        Path ennemyPath = e.drawEnnemy();
+
+                        //Drawing the Ennemy
+                        canvas.drawPath(ennemyPath, e.getPaint());
+
+                        //Updating the ennemy position
+                        e.setPosition(new Point(e.getPosition().x, e.getPosition().y + e.getSpeed()));
+                        if (e.getPosition().y > (this.getHeight() + 10)) {
+                            //removing ennemy if it is out of bounds
+                            it.remove();
+                        }
+                    }
+
+                    //Drawing text
+                    Paint textPaint = new Paint();
+                    textPaint.setColor(Color.WHITE);
+                    textPaint.setTextSize(80);
+                    canvas.drawText("SCORE : " + String.valueOf(mScore), this.getWidth() / 2, 100, textPaint);
+
+                    Path sendScoreBox = new Path();
+                    sendScoreBox.addRect(0,this.getHeight()/2 - 100,this.getWidth(),this.getHeight()/2 + 100,Path.Direction.CW);
+                    Region sendScoreHitBox = new Region();
+                    sendScoreHitBox.setPath(sendScoreBox, new Region(0, 0, this.getWidth(), this.getHeight()));
+                    if (!mTouchHitBox.quickReject(sendScoreHitBox) && mTouchHitBox.op(sendScoreHitBox, Region.Op.INTERSECT)) {
+                        //Hit Ennemy if touched
+                        sendSMS();
+                    }
+                    Paint boxPaint = new Paint();
+                    boxPaint.setColor(Color.WHITE);
+                    canvas.drawPath(sendScoreBox,boxPaint);
+
+                    mSurfaceHolder.unlockCanvasAndPost(canvas);
+                }
             }
         }
     }
@@ -326,6 +382,21 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         return false;
     }
 
+    public void sendSMS()
+    {
+        mListener.smsCallback();
+    }
+
+    public boolean getPaused()
+    {
+        return mPaused;
+    }
+
+    public int getScore()
+    {
+        return mScore;
+    }
+
     public void onPauseClick()
     {
         mPaused=!mPaused;
@@ -333,23 +404,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     public void onRestartClick()
     {
-        mPaused = false;
-        mTimeInPause = 0;
-
-        mBeginningTime = System.currentTimeMillis();
-        mCurrentTime = 0;
-        mPrevEventTime = 0;
-        mProxEventTime = 0;
-        mEnnemySpawnCountdown=2000;
-        mlastEnnemySpawn=0;
-
-        mRocket = new Rocket();
-        mRocketSmoke = new Vector<>();
-        mRocketExplosion = 30;
-        mEnnemy = new Vector<>();
-        //mbgColor = Color.argb(255,135, 206, 235);
-        mbgColor = Color.argb(255,18, 62, 135);
-        mRocketPosUnset = true;
+        init();
     }
 
 

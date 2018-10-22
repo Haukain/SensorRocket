@@ -1,15 +1,15 @@
 package com.enib.cai.sensorrocket;
 
-import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Layout;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GameListener {
 
     private FrameLayout mSceneLayout;
 
@@ -25,20 +25,21 @@ public class MainActivity extends AppCompatActivity {
 
         mGameLayout = new LinearLayout(this);
 
-        CustomSurfaceView gameView = new CustomSurfaceView(this);
+        CustomSurfaceView gameView = new CustomSurfaceView(this,this);
         gameView.setId(1);
         mGameLayout.addView(gameView);
 
         mButtonLayout = new LinearLayout(this);
 
-        final Context that = this;
-        Button pauseButton = new Button(this);
+        final Button pauseButton = new Button(this);
         pauseButton.setText("Pause");
         pauseButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         ((CustomSurfaceView)mGameLayout.findViewById(1)).onPauseClick();
+                        if (((CustomSurfaceView)mGameLayout.findViewById(1)).getPaused()) pauseButton.setText("Play");
+                        else pauseButton.setText("Pause");
                     }
                 }
         );
@@ -75,5 +76,18 @@ public class MainActivity extends AppCompatActivity {
     {
         super.onResume();
         ((CustomSurfaceView)mGameLayout.findViewById(1)).onResume();
+    }
+
+    @Override
+    public void smsCallback() {
+
+        String msg = "I just played SensorRocket and got " + String.valueOf(((CustomSurfaceView)mGameLayout.findViewById(1)).getScore()) + " points, check out this app !";
+
+        Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+        sendIntent.setData(Uri.parse("sms:"));
+
+        sendIntent.putExtra("sms_body", msg);
+
+        startActivity(sendIntent);
     }
 }
