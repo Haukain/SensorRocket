@@ -5,10 +5,13 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Region;
+import android.graphics.Shader;
+import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -57,6 +60,9 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private Lumen mLumen;
     private Proximity mProximity;
 
+    // Vibrator
+    private Vibrator mVibrator;
+
     // Holder for canvas
     private SurfaceHolder mSurfaceHolder;
 
@@ -74,6 +80,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         //mGyro = new Gyro(context);
         mLumen = new Lumen(context);
         mProximity = new Proximity(context);
+
+        mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
         mSurfaceHolder = getHolder();
         mSurfaceHolder.addCallback(this);
@@ -109,7 +117,6 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     // Activity onPause
     public void onPause()
     {
-        mPaused=true;
         mAccelero.onPause();
         //mGyro.onPause();
         mLumen.onPause();
@@ -142,6 +149,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
         while (mRunning) {
 
             mTouchHitBox = new Region();
+            mbgColor = Color.argb(255,mLumen.currentLux*30/30000,mLumen.currentLux*100/30000, mLumen.currentLux*255/30000);
 
             if(!mPaused && !mEnded) {
                 // Setting the rocket position for the first time
@@ -169,7 +177,6 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         }
 
                         //Painting background
-                        mbgColor = Color.argb(255,mLumen.currentLux*30/30000,mLumen.currentLux*100/30000, mLumen.currentLux*255/30000);
                         canvas.drawColor(mbgColor);
 
                         Region rocketHitBox = new Region();
@@ -245,6 +252,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         boolean prox = false;
                         if ((mProximity.getDistance() == 0)&(dif>=10000)) {
                             mProxEventTime = mCurrentTime;
+                            mVibrator.vibrate(500);
                             prox = true;
                         }
 
@@ -273,6 +281,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                             if(mCurrentTime-mPrevEventTime>=3000) {
                                 if (!mTouchHitBox.quickReject(ennemyHitBox) && mTouchHitBox.op(ennemyHitBox, Region.Op.INTERSECT)) {
                                     //Hit Ennemy if touched
+                                    mVibrator.vibrate(50);
                                     e.setHit(true);
                                     mPrevEventTime = mCurrentTime;
                                 }
@@ -343,10 +352,11 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     Paint textPaint = new Paint();
                     textPaint.setColor(Color.WHITE);
                     textPaint.setTextSize(80);
-                    canvas.drawText("SCORE : " + String.valueOf(mScore), this.getWidth() / 2, 100, textPaint);
+                    canvas.drawText("SCORE FINAL :",this.getWidth() / 2 - 250, this.getHeight()/2 - 300,textPaint);
+                    canvas.drawText(String.valueOf(mScore), this.getWidth() / 2 - 50, this.getHeight()/2 - 200, textPaint);
 
                     Path sendScoreBox = new Path();
-                    sendScoreBox.addRect(0,this.getHeight()/2 - 100,this.getWidth(),this.getHeight()/2 + 100,Path.Direction.CW);
+                    sendScoreBox.addRoundRect(100,this.getHeight()/2 - 100,this.getWidth()-100,this.getHeight()/2 + 100,20,20,Path.Direction.CW);
                     Region sendScoreHitBox = new Region();
                     sendScoreHitBox.setPath(sendScoreBox, new Region(0, 0, this.getWidth(), this.getHeight()));
                     if (!mTouchHitBox.quickReject(sendScoreHitBox) && mTouchHitBox.op(sendScoreHitBox, Region.Op.INTERSECT)) {
@@ -355,7 +365,12 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     }
                     Paint boxPaint = new Paint();
                     boxPaint.setColor(Color.WHITE);
+                    boxPaint.setShader(new LinearGradient(this.getWidth()/2,this.getHeight()/2 + 50,this.getWidth()/2,this.getHeight()/2 + 100,Color.WHITE,Color.LTGRAY, Shader.TileMode.CLAMP));
                     canvas.drawPath(sendScoreBox,boxPaint);
+
+                    textPaint.setColor(Color.BLACK);
+                    textPaint.setTextSize(60);
+                    canvas.drawText("Tap here to send your score !", 150, this.getHeight()/2+20, textPaint);
 
                     mSurfaceHolder.unlockCanvasAndPost(canvas);
                 }
@@ -391,6 +406,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     {
         return mPaused;
     }
+
+    public void setPaused(boolean p) { mPaused=p;}
 
     public int getScore()
     {

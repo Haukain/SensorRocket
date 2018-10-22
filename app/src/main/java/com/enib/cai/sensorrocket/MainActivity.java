@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements GameListener {
 
         final Button pauseButton = new Button(this);
         pauseButton.setText("Pause");
+        pauseButton.setId(1);
         pauseButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements GameListener {
         );
         Button restartButton = new Button(this);
         restartButton.setText("Restart");
+        pauseButton.setId(2);
         restartButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
@@ -68,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements GameListener {
     protected void onPause()
     {
         super.onPause();
+        ((CustomSurfaceView)mGameLayout.findViewById(1)).setPaused(true);
         ((CustomSurfaceView)mGameLayout.findViewById(1)).onPause();
     }
 
