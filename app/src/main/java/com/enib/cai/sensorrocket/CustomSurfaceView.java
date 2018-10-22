@@ -3,6 +3,8 @@ package com.enib.cai.sensorrocket;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -50,6 +52,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private Vector<Ennemy> mEnnemy;
     private int mbgColor;
     private boolean mRocketPosUnset;
+    private Bitmap mTouchLogo;
+    private Bitmap mProximityLogo;
 
     // On touch hitbox
     private Region mTouchHitBox;
@@ -85,6 +89,8 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         mSurfaceHolder = getHolder();
         mSurfaceHolder.addCallback(this);
+
+        //mTouchLogo = BitmapFactory.decodeResource(context.getResources(), R.drawable.touch);
 
         init();
     }
@@ -226,16 +232,18 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         //Time before next TouchEvent
                         Paint waitingPaint = new Paint();
                         waitingPaint.setColor(Color.WHITE);
+                        waitingPaint.setStyle(Paint.Style.STROKE);
+                        waitingPaint.setStrokeWidth(20);
                         long diff = mCurrentTime-mPrevEventTime;
                         if (diff>=3000)
                         {
                             waitingPaint.setColor(Color.GREEN);
-                            canvas.drawCircle(this.getWidth()-150 , this.getHeight()-100,50,waitingPaint);
+                            canvas.drawCircle(100, 250,75,waitingPaint);
                             waitingPaint.setColor(Color.WHITE);
                         }
                         else
                         {
-                            canvas.drawArc(this.getWidth()-200 , this.getHeight()-150,this.getWidth()-100,this.getHeight()-50,270-(float)diff/3000*360,(float)diff/3000*360,true,waitingPaint);
+                            canvas.drawArc(25 , 175,175,325,270,(float)diff/3000*360,false,waitingPaint);
                         }
 
                         //Time before next ProximityEvent
@@ -243,11 +251,11 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         if (dif>=10000)
                         {
                             waitingPaint.setColor(Color.GREEN);
-                            canvas.drawCircle(this.getWidth()-150 , this.getHeight()-300,50,waitingPaint);
+                            canvas.drawCircle(100 , 450,75,waitingPaint);
                         }
                         else
                         {
-                            canvas.drawArc(this.getWidth()-200 , this.getHeight()-350,this.getWidth()-100,this.getHeight()-250,270-(float)dif/10000*360,(float)dif/10000*360,true,waitingPaint);
+                            canvas.drawArc(25, 375,175,525,270,(float)dif/10000*360,false,waitingPaint);
                         }
                         boolean prox = false;
                         if ((mProximity.getDistance() == 0)&(dif>=10000)) {
