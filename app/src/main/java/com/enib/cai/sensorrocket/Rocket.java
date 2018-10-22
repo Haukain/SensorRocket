@@ -10,22 +10,25 @@ import android.util.Log;
 public class Rocket {
 
     private Paint mPaint;
+    private Paint mStrokePaint;
     private Point mPosition;
     private boolean mHit;
-
-    private int mLife;
 
     public Rocket()
     {
         mPosition = new Point(0,0);
         mHit = false;
-        mLife = 1;
 
         mPaint = new Paint();
-        mPaint.setStrokeWidth(4);
         mPaint.setColor(Color.argb(255,200, 0, 24));
-        mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        mPaint.setStyle(Paint.Style.FILL);
         mPaint.setAntiAlias(true);
+
+        mStrokePaint = new Paint();
+        mStrokePaint.setStrokeWidth(4);
+        mStrokePaint.setColor(Color.argb(200,255, 255, 255));
+        mStrokePaint.setStyle(Paint.Style.STROKE);
+        mStrokePaint.setAntiAlias(true);
     }
 
     public Path drawRocket() {
@@ -63,33 +66,16 @@ public class Rocket {
         return mPaint;
     }
 
-    public void setPaint(int alpha,int red,int green,int blue) // Setting paint to argb(a,r,g,b)
-    {
-        mPaint.setColor(Color.argb(alpha,red,green,blue));
-    }
+    public Paint getStrokePaint() { return mStrokePaint; }
 
-    public void setPaint() // Setting paint to default paint (255,255,0,0)
+    public void setHit() // Setting hit boolean and changing paint to "hit" paint
     {
-        mPaint.setColor(Color.argb(255,200, 0, 24));
-    }
-
-    public boolean getHit() // Getting hit boolean
-    {
-        return mHit;
-    }
-
-    public void setHit(boolean state) // Setting hit boolean and changing paint to "hit" paint
-    {
-        mHit = state;
-        if(state==true)
-        {
-            mLife--;
-        }
+        mHit = true;
     }
 
     public boolean isAlive()
     {
-        return (mLife>0);
+        return (!mHit);
     }
 
 }

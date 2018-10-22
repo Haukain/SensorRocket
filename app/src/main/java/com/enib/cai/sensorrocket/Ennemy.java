@@ -26,7 +26,7 @@ public class Ennemy {
 
         mPaint = new Paint();
         mPaint.setStrokeWidth(4);
-        mPaint.setColor(Color.argb(255,245+(int)(Math.random()*20-10), 215+(int)(Math.random()*20-10), 0+(int)(Math.random()*20-10)));
+        mPaint.setColor(Color.argb(255,245+(int)(Math.random()*20-10), 200+(int)(Math.random()*20-10), 0));
         mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         mPaint.setAntiAlias(true);
     }
@@ -69,11 +69,6 @@ public class Ennemy {
     public Paint getPaint()
     {
         return mPaint;
-    }
-
-    public void setPaint(int a,int r,int g, int b)
-    {
-        mPaint.setColor(Color.argb(a,r,g,b));
     }
 
     public void setHit(boolean state) {

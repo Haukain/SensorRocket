@@ -1,7 +1,9 @@
 package com.enib.cai.sensorrocket;
 
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -92,5 +94,12 @@ public class MainActivity extends AppCompatActivity implements GameListener {
         sendIntent.putExtra("sms_body", msg);
 
         startActivity(sendIntent);
+    }
+
+    @Override
+    public void rocketHitCallback()
+    {
+        MediaPlayer mp = MediaPlayer.create(this,R.raw.death_sound);
+        mp.start();
     }
 }

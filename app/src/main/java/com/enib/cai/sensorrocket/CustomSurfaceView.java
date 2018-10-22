@@ -11,7 +11,9 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Region;
 import android.graphics.Shader;
+import android.media.MediaPlayer;
 import android.os.Vibrator;
+import android.provider.MediaStore;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -183,7 +185,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         if(mRocket.isAlive()) {
                             //Drawing animation
                             Paint smokePaint = new Paint();
-                            smokePaint.setColor(Color.argb((int) (Math.random() * 50 + 50), 255, 255, 255));
+                            smokePaint.setColor(Color.argb((int) (Math.random() * 50 + 100), 255, 255, 255));
                             if (mRocketSmoke.size() < 20)
                                 mRocketSmoke.add(new Point(mRocket.getPosition().x, mRocket.getPosition().y + 30));
                             Iterator<Point> pi = mRocketSmoke.iterator();
@@ -200,6 +202,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                             rocketHitBox.setPath(rocketPath, new Region(0, 0, this.getWidth(), this.getHeight()));
                             //Drawing Rocket
                             canvas.drawPath(rocketPath, mRocket.getPaint());
+                            canvas.drawPath(rocketPath, mRocket.getStrokePaint());
                         }
                         else{
 
@@ -207,7 +210,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                             Paint explosionPaint = new Paint();
                             for(int i=0;i<mRocketExplosion;i++)
                             {
-                                explosionPaint.setColor(Color.argb((int) (Math.random() * 50 + 50), 255, (int) (Math.random() * 255), 0));
+                                explosionPaint.setColor(Color.argb((int) (Math.random() * 50), 255, (int) (Math.random() * 255), 0));
                                 canvas.drawCircle(mRocket.getPosition().x, mRocket.getPosition().y, (int) (Math.random() * 100 + 100), explosionPaint);
                             }
                             mRocketExplosion--;
@@ -267,14 +270,11 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                             Region ennemyHitBox = new Region();
                             ennemyHitBox.setPath(ennemyPath, new Region(0, 0, this.getWidth(), this.getHeight()));
 
-                            if (!hitThisLoop && !e.getHit()) {
+                            if (!e.getHit()) {
                                 //Checking for collision only if not hit this loop
                                 if (!rocketHitBox.quickReject(ennemyHitBox) && rocketHitBox.op(ennemyHitBox, Region.Op.INTERSECT)) {
-                                    //If not alread hit and currently hit, set "hit" to 1
-                                    if (!mRocket.getHit()) {
-                                        hitThisLoop = true;
-                                        mRocket.setHit(true);
-                                    }
+                                    mRocket.setHit();
+                                    rocketHit();
                                 }
                             }
 
@@ -301,11 +301,6 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                                 //removing ennemy if it is out of bounds
                                 it.remove();
                             }
-                        }
-
-                        if (!hitThisLoop && mRocket.getHit()) // If not hit by any ennemy and already hit, set "hit" to 0
-                        {
-                            mRocket.setHit(false);
                         }
 
                         //Drawing text
@@ -400,6 +395,11 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     public void sendSMS()
     {
         mListener.smsCallback();
+    }
+
+    public void rocketHit()
+    {
+        mListener.rocketHitCallback();
     }
 
     public boolean getPaused()
