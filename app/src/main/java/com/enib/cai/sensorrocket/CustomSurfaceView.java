@@ -1,6 +1,5 @@
 package com.enib.cai.sensorrocket;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -8,7 +7,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Region;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -252,13 +250,13 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
                                 }
                             }
 
-                            if (!mTouchHitBox.quickReject(ennemyHitBox) && mTouchHitBox.op(ennemyHitBox, Region.Op.INTERSECT)) {
-                                //Hit Ennemy if touched
-                                e.setHit(true);
+                            if(mCurrentTime-mPrevEventTime>=3000) {
+                                if (!mTouchHitBox.quickReject(ennemyHitBox) && mTouchHitBox.op(ennemyHitBox, Region.Op.INTERSECT)) {
+                                    //Hit Ennemy if touched
+                                    e.setHit(true);
+                                    mPrevEventTime = mCurrentTime;
+                                }
                             }
-                            /*if (mLumen.currentLux > 1000) {
-                                e.setHit(true);
-                            }*/
 
                             if (prox == true) {
                                 e.setHit(true);
@@ -313,7 +311,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
     @Override
     public boolean onTouchEvent(MotionEvent e)
     {
-        if(mCurrentTime-mPrevEventTime>=3000) {
+
             if (e.getAction() == MotionEvent.ACTION_DOWN) {
                 float x = e.getX();
                 float y = e.getY();
@@ -323,11 +321,7 @@ public class CustomSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
                 // Creating hitbox to collide with ennemies
                 mTouchHitBox.setPath(touchPath, new Region(0, 0, this.getWidth(), this.getHeight()));
-                mPrevEventTime = mCurrentTime;
-
                 return true;
-            }
-            return false;
         }
         return false;
     }
